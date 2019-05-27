@@ -1,31 +1,33 @@
-var createGraph = require('./ngraph.graph.min.js');
-var path = require('./ngraph.path.min.js');
+createGraph = require('./ngraph.graph.min.js');
+path = require('./ngraph.path.min.js');
 fs = require('fs');
 
-start();
-
-function start() {
-    seaMap = {
-        pathStart: null,
-        pathEnd: null,
-        minX: 0, minY: 0, maxX: 0, maxY: 0,
-        reefs: [],
-        waters: []
-    };
-
-    if (process.argv.length < 3) {
-        console.log('Usage: node ' + "Pathfinding.js" + ' [#input-file#].txt');
-        process.exit(1);
-    }
-
-    readInput();
+seaMap = {
+    pathStart: null,
+    pathEnd: null,
+    minX: null, minY: null, maxX: null, maxY: null,
+    reefs: [],
+    waters: []
 };
+
+outputData = [];
+foundPath = null;
+graph = null;
+filename = null;
+inputSplit = null;
+
+if (process.argv.length < 3) {
+    console.log('Usage: node ' + "Pathfinding.js" + ' [#input-file#].txt');
+    process.exit(1);
+}
+
+readInput();
 
 //Todo: Think about error scenarios
 function ProcessData() {
-    parseInput();
-    DetermineRange();
-    FillMap();
+    fillReefs();
+    determineRange();
+    fillWaters();
     graph = createGraph();
     pupulateGraph();
     findShortestPath();
@@ -34,7 +36,7 @@ function ProcessData() {
 }
 
 function generateOutputFile() {
-    outputText = "";
+    let outputText = "";
     outputData.forEach(row => {
         outputText += row.join("") + "\r\n";
     });
@@ -42,7 +44,6 @@ function generateOutputFile() {
 }
 
 function generateOutputData() {
-    outputData = [];
     for (var y = seaMap.minY; y <= seaMap.maxY; y++) {
         outputData.push([]);
         for (var x = seaMap.minX; x <= seaMap.maxX; x++)
@@ -56,7 +57,6 @@ function generateOutputData() {
                 outputData[y - seaMap.minY].push('O');
             else outputData[y - seaMap.minY].push('.');
     }
-    console.log(outputData);
 }
 
 function findShortestPath() {
@@ -64,6 +64,12 @@ function findShortestPath() {
     let startNodeId = 'x' + seaMap.pathStart.X + 'y' + seaMap.pathStart.Y;
     let endNodeId = 'x' + seaMap.pathEnd.X + 'y' + seaMap.pathEnd.Y;
     foundPath = pathFinder.find(startNodeId, endNodeId);
+
+    if (foundPath.length == 0) {
+        outputData = [["error"], ["path doesn't exist!"]];
+        generateOutputFile();
+        process.exit(1);
+    }
 }
 
 function pupulateGraph() {
@@ -95,11 +101,8 @@ function readInput() {
     });
 }
 
-function parseInput() {
-    let validInputSplit = inputSplit.filter(s => s.isValidCoordinate());
-
-    seaMap.pathStart = validInputSplit[0].parseToCoordinateAs("S");
-    seaMap.pathEnd = validInputSplit[validInputSplit.length - 1].parseToCoordinateAs("E");
+function fillReefs() {
+    validInputSplit = inputSplit.filter(s => s.isValidCoordinate());
 
     for (var i = 1; i <= validInputSplit.length - 2; i++) {
         seaMap.reefs.push(validInputSplit[i].parseToCoordinateAs("X"));
@@ -107,12 +110,12 @@ function parseInput() {
     //Todo: See if the input makes sense in a broad definition
 }
 
-DetermineRange = function () {
-    //Todo: Use Math.min like this:
-    // minX = Math.min(coords.map(c => parseInt(c.X)));
-    // maxX = Math.max(coords.map(c => parseInt(c.X)));
-    // minY = Math.min(coords.map(c => parseInt(c.Y)));
-    // maxY = Math.max(coords.map(c => parseInt(c.Y)));
+determineRange = function () {
+    seaMap.minX = seaMap.reefs[0].X;
+    seaMap.maxX = seaMap.reefs[0].X;
+    seaMap.minY = seaMap.reefs[0].Y;
+    seaMap.maxY = seaMap.reefs[0].Y;
+
     seaMap.reefs.forEach(elem => {
         if (elem.X < seaMap.minX) seaMap.minX = elem.X;
         if (elem.X > seaMap.maxX) seaMap.maxX = elem.X;
@@ -121,9 +124,27 @@ DetermineRange = function () {
     });
 }
 
-FillMap = function () {
+fillWaters = function () {
+    seaMap.pathStart = validInputSplit[0].parseToCoordinateAs("S");
+    seaMap.pathEnd = validInputSplit[validInputSplit.length - 1].parseToCoordinateAs("E");
+
+    if (seaMap.pathStart.isInRange(seaMap.minX, seaMap.maxX, seaMap.minY, seaMap.maxY) == false) {
+        console.log("Start point falls out of the map extent");
+        outputData = [["error"], ["cannot navigate outside map extent!"]];
+        generateOutputFile();
+        process.exit(1);
+    }
+
+    if (seaMap.pathEnd.isInRange(seaMap.minX, seaMap.maxX, seaMap.minY, seaMap.maxY) == false) {
+        console.log("End point falls out of the map extent");
+        outputData = [["error"], ["cannot navigate outside map extent!"]];
+        generateOutputFile();
+        process.exit(1);
+    }
+
     for (var x = seaMap.minX; x <= seaMap.maxX; x++)
         for (var y = seaMap.minY; y <= seaMap.maxY; y++) {
+
             if (seaMap.reefs.find(c => c.X == x && c.Y == y) != undefined)
                 continue;
             if (x == seaMap.pathStart.X && y == seaMap.pathStart.Y)
@@ -138,6 +159,13 @@ Coordinate = function (x, y, type) {
     this.X = x;
     this.Y = y;
     this.Type = type;
+    this.isInRange = function (minX, maxX, minY, maxY) {
+        if (this.X < minX) return false;
+        if (this.X > maxX) return false;
+        if (this.Y < minY) return false;
+        if (this.Y > maxY) return false;
+        return true;
+    }
 };
 
 String.prototype.isValidCoordinate = function () {
