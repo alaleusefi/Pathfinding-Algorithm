@@ -1,4 +1,5 @@
 var createGraph = require('./ngraph.graph.min.js');
+var path = require('./ngraph.path.min.js');
 
 start();
 
@@ -26,10 +27,35 @@ function ProcessData() {
     FillMap();
     graph = createGraph();
     pupulateGraph();
+    findShortestPath();
 }
 
-function pupulateGraph(){
-    console.log(graph);
+function findShortestPath() {
+    let pathFinder = path.aStar(graph);
+    let startNodeId = 'x' + seaMap.pathStart.X + 'y' + seaMap.pathStart.Y;
+    let endNodeId = 'x' + seaMap.pathEnd.X + 'y' + seaMap.pathEnd.Y;
+    let foundPath = pathFinder.find(startNodeId, endNodeId);
+    console.log(foundPath);
+}
+
+function pupulateGraph() {
+    for (var x = seaMap.minX; x <= seaMap.maxX; x++)
+        for (var y = seaMap.minY; y <= seaMap.maxY; y++) {
+            if (seaMap.reefs.find(c => c.X == x && c.Y == y) != undefined)
+                continue;
+            let currentNodeId = 'x' + x + 'y' + y;
+            graph.addNode(currentNodeId, ".");
+
+            let leftNeighbourId = 'x' + (x - 1) + 'y' + y;
+            let leftNeighbour = graph.hasNode(leftNeighbourId);
+            if (leftNeighbour != undefined)
+                graph.addLink(currentNodeId, leftNeighbourId);
+
+            let upNeighbourId = 'x' + x + 'y' + (y - 1);
+            let upNeighbour = graph.hasNode(upNeighbourId);
+            if (upNeighbour != undefined)
+                graph.addLink(currentNodeId, upNeighbourId);
+        }
 }
 
 function readInput() {
