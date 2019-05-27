@@ -9,7 +9,7 @@ function start() {
         pathEnd: null,
         minX: 0, minY: 0, maxX: 0, maxY: 0,
         reefs: [],
-        sea: []
+        waters: []
     };
 
     if (process.argv.length < 3) {
@@ -28,14 +28,32 @@ function ProcessData() {
     graph = createGraph();
     pupulateGraph();
     findShortestPath();
+    generateOutputData();
+}
+
+function generateOutputData() {
+    let outputData = [];
+    for (var y = seaMap.minY; y <= seaMap.maxY; y++) {
+        outputData.push([]);
+        for (var x = seaMap.minX; x <= seaMap.maxX; x++)
+            if (seaMap.reefs.find(c => c.X == x && c.Y == y) != undefined)
+                outputData[y - seaMap.minY].push('X');
+            else if (seaMap.pathStart.X == x && seaMap.pathStart.Y == y)
+                outputData[y - seaMap.minY].push('S');
+            else if (seaMap.pathEnd.X == x && seaMap.pathEnd.Y == y)
+                outputData[y - seaMap.minY].push('E');
+            else if (foundPath.find(o => o.id.parseToCoordinateAs('O').X == x && o.id.parseToCoordinateAs('O').Y == y) != undefined)
+                outputData[y - seaMap.minY].push('O');
+            else outputData[y - seaMap.minY].push('.');
+    }
+    console.log(outputData);
 }
 
 function findShortestPath() {
     let pathFinder = path.aStar(graph);
     let startNodeId = 'x' + seaMap.pathStart.X + 'y' + seaMap.pathStart.Y;
     let endNodeId = 'x' + seaMap.pathEnd.X + 'y' + seaMap.pathEnd.Y;
-    let foundPath = pathFinder.find(startNodeId, endNodeId);
-    console.log(foundPath);
+    foundPath = pathFinder.find(startNodeId, endNodeId);
 }
 
 function pupulateGraph() {
@@ -103,7 +121,7 @@ FillMap = function () {
                 continue;
             if (x == seaMap.pathEnd.X && y == seaMap.pathEnd.Y)
                 continue;
-            seaMap.sea.push(new Coordinate(x, y, "."));
+            seaMap.waters.push(new Coordinate(x, y, "."));
         }
 };
 
