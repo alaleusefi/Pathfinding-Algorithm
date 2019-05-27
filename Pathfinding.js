@@ -1,5 +1,6 @@
 var createGraph = require('./ngraph.graph.min.js');
 var path = require('./ngraph.path.min.js');
+fs = require('fs');
 
 start();
 
@@ -18,9 +19,9 @@ function start() {
     }
 
     readInput();
-
 };
 
+//Todo: Think about error scenarios
 function ProcessData() {
     parseInput();
     DetermineRange();
@@ -29,15 +30,24 @@ function ProcessData() {
     pupulateGraph();
     findShortestPath();
     generateOutputData();
+    generateOutputFile();
+}
+
+function generateOutputFile() {
+    outputText = "";
+    outputData.forEach(row => {
+        outputText += row.join("") + "\r\n";
+    });
+    fs.writeFile("./" + filename + ".answer", outputText, function () { console.log("done") });
 }
 
 function generateOutputData() {
-    let outputData = [];
+    outputData = [];
     for (var y = seaMap.minY; y <= seaMap.maxY; y++) {
         outputData.push([]);
         for (var x = seaMap.minX; x <= seaMap.maxX; x++)
             if (seaMap.reefs.find(c => c.X == x && c.Y == y) != undefined)
-                outputData[y - seaMap.minY].push('X');
+                outputData[y - seaMap.minY].push('x');
             else if (seaMap.pathStart.X == x && seaMap.pathStart.Y == y)
                 outputData[y - seaMap.minY].push('S');
             else if (seaMap.pathEnd.X == x && seaMap.pathEnd.Y == y)
@@ -77,8 +87,7 @@ function pupulateGraph() {
 }
 
 function readInput() {
-    var fs = require('fs')
-        , filename = process.argv[2];
+    filename = process.argv[2];
     fs.readFile(filename, 'utf8', function (err, inputData) {
         if (err) throw err;
         inputSplit = inputData.replace(/\s/g, '').split(',');
