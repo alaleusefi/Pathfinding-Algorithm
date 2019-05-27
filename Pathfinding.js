@@ -1,3 +1,5 @@
+var createGraph = require('./ngraph.graph.min.js');
+
 start();
 
 function start() {
@@ -14,16 +16,33 @@ function start() {
         process.exit(1);
     }
 
+    readInput();
+
+};
+
+function ProcessData() {
+    parseInput();
+    DetermineRange();
+    FillMap();
+    graph = createGraph();
+    pupulateGraph();
+}
+
+function pupulateGraph(){
+    console.log(graph);
+}
+
+function readInput() {
     var fs = require('fs')
         , filename = process.argv[2];
     fs.readFile(filename, 'utf8', function (err, inputData) {
         if (err) throw err;
-        let inputSplit = inputData.replace(/\s/g, '').split(',');
-        parseInput(inputSplit);
+        inputSplit = inputData.replace(/\s/g, '').split(',');
+        ProcessData();
     });
-};
+}
 
-function parseInput(inputSplit) {
+function parseInput() {
     let validInputSplit = inputSplit.filter(s => s.isValidCoordinate());
 
     seaMap.pathStart = validInputSplit[0].parseToCoordinateAs("S");
@@ -33,8 +52,6 @@ function parseInput(inputSplit) {
         seaMap.reefs.push(validInputSplit[i].parseToCoordinateAs("X"));
     }
     //Todo: See if the input makes sense in a broad definition
-    DetermineRange();
-    FillMap();
 }
 
 DetermineRange = function () {
@@ -62,10 +79,6 @@ FillMap = function () {
                 continue;
             seaMap.sea.push(new Coordinate(x, y, "."));
         }
-
-    console.log(seaMap);
-    console.log(seaMap.reefs.length);
-    console.log(seaMap.sea.length);
 };
 
 Coordinate = function (x, y, type) {
