@@ -72,30 +72,30 @@ function fillWaters(callback) {
 
     if (seaMap.pathStart.isInRange(seaMap.minX, seaMap.maxX, seaMap.minY, seaMap.maxY) == false) {
         console.log("Start point falls out of the map extent");
-        //Todo: Put an error in the output file
-        outputData = [["error"], ["cannot navigate outside map extent!"]];
-        process.exit(1);
+        outputData = [["error:"], ["cannot navigate outside map extent!"]];
+        generateOutputFile(() => process.exit(1));
     }
 
-    if (seaMap.pathEnd.isInRange(seaMap.minX, seaMap.maxX, seaMap.minY, seaMap.maxY) == false) {
+    else if (seaMap.pathEnd.isInRange(seaMap.minX, seaMap.maxX, seaMap.minY, seaMap.maxY) == false) {
         console.log("End point falls out of the map extent");
-        //Todo: Put an error in the output file
-        outputData = [["error"], ["cannot navigate outside map extent!"]];
-        process.exit(1);
+        outputData = [["error:"], ["cannot navigate outside map extent!"]];
+        generateOutputFile(() => process.exit(1));
     }
 
-    for (var x = seaMap.minX; x <= seaMap.maxX; x++)
-        for (var y = seaMap.minY; y <= seaMap.maxY; y++) {
+    else {
+        for (var x = seaMap.minX; x <= seaMap.maxX; x++)
+            for (var y = seaMap.minY; y <= seaMap.maxY; y++) {
 
-            if (seaMap.reefs.find(c => c.X == x && c.Y == y) != undefined)
-                continue;
-            if (x == seaMap.pathStart.X && y == seaMap.pathStart.Y)
-                continue;
-            if (x == seaMap.pathEnd.X && y == seaMap.pathEnd.Y)
-                continue;
-            seaMap.waters.push(new Coordinate(x, y, "."));
-        }
-    callback();
+                if (seaMap.reefs.find(c => c.X == x && c.Y == y) != undefined)
+                    continue;
+                if (x == seaMap.pathStart.X && y == seaMap.pathStart.Y)
+                    continue;
+                if (x == seaMap.pathEnd.X && y == seaMap.pathEnd.Y)
+                    continue;
+                seaMap.waters.push(new Coordinate(x, y, "."));
+            }
+        callback();
+    }
 };
 
 function initialiseGraph(callback) {
@@ -132,11 +132,11 @@ function findShortestPath(callback) {
 
     if (foundPath.length == 0) {
         console.log("Path does not exist!");
-        //Todo: Put an error in the output file
-        outputData = [["error"], ["path doesn't exist!"]];
-        process.exit(1);
+        outputData = [["error:"], ["path doesn't exist!"]];
+        generateOutputFile(() => process.exit(1));
     }
-    callback();
+    else
+        callback();
 }
 
 function generateOutputData(callback) {
